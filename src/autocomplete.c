@@ -1,4 +1,4 @@
-#include "../inc/chat42.h"
+#include "../inc/chatty.h"
 
 
 char **init_autocomplete(const char *text, int start, int end) {

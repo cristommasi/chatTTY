@@ -1,4 +1,4 @@
-#include "../inc/chat42.h"
+#include "../inc/chatty.h"
 #include <sys/select.h>
 
 pthread_mutex_t			hash_table_mutex   = PTHREAD_MUTEX_INITIALIZER;

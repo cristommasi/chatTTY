@@ -1,4 +1,4 @@
-#include "../inc/chat42.h"
+#include "../inc/chatty.h"
 
 void    ht_init(t_client **users_table) {
 

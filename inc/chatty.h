@@ -180,11 +180,11 @@ void              colour_list_command(const char *arg1, const char *arg2);
 
 #define SERVER_COMMAND_COUNT 5
 #define HELP_MSG  "\
-usage: chat42 [--version] [--help] [--login] [<username> + <message>]\n\
+usage: chatty [--version] [--help] [--login] [<username> + <message>]\n\
               [--colour-list] [--colour-set (+ <colour>::<colour>)]\n\
               [--block + <username>]\n\n\
-These are common chat42 commands used in various situations:\n\n\
-  --connect                      Start chat42 process.\n\
+These are common chatty commands used in various situations:\n\n\
+  --connect                      Start chatty process.\n\
   --help                         Print help page.\n\
   --version                      State current version.\n\
   --colour-list                  List all ANSI colours.\n\

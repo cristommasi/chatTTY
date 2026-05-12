@@ -1,4 +1,4 @@
-#include "../inc/chat42.h"
+#include "../inc/chatty.h"
 
 
 command_func_t    is_server_command(char *cmd) {
@@ -20,14 +20,14 @@ command_func_t    is_server_command(char *cmd) {
 
 void    handle_commands(const char *input, t_tcp *tcp) {
 
-	char chat42[32], cmd_or_user[128], msg[BUF_SIZE];
+	char chatty[32], cmd_or_user[128], msg[BUF_SIZE];
     char arg1[64], arg2[64];
 	int offset = 0;
     command_func_t func;
 
-	if (sscanf(input, "%31s%n", chat42, &offset) != 1)
+	if (sscanf(input, "%31s%n", chatty, &offset) != 1)
         return ; 
-	if (strcmp(chat42, "chat42") != 0)
+	if (strcmp(chatty, "chatty") != 0)
         return ; 
 	input += offset;
 	if (sscanf(input, "%127s%n", cmd_or_user, &offset) != 1)
@@ -47,7 +47,7 @@ void    handle_commands(const char *input, t_tcp *tcp) {
     }
 	if (*input == '\0') { 
 
-		return ((void)printf("usage: chat42 <username> \"message\"\n"), (void)fflush(stdout)); 
+		return ((void)printf("usage: chatty <username> \"message\"\n"), (void)fflush(stdout)); 
 	} 
 
 	strncpy(msg, input, BUF_SIZE - 1); 
@@ -71,7 +71,7 @@ void    help_command(const char *arg1, const char *arg2) {
     if (arg1 == NULL && arg2 == NULL)
         printf("%s", HELP_MSG);
     else
-        printf("Usage: chat42 --help\n");
+        printf("Usage: chatty --help\n");
 }
 
 
@@ -79,14 +79,14 @@ void    disconnect_command(const char *arg1, const char *arg2) {
     if (arg1 == NULL && arg2 == NULL)
         exit_manager(); 
     else
-        printf("Usage: chat42 --disconnect\n");
+        printf("Usage: chatty --disconnect\n");
 }
 
 void    version_command(const char *arg1, const char *arg2) {
     if (arg1 == NULL && arg2 == NULL)
         printf("%s", VERSION_MSG);
     else
-        printf("Usage: chat42 --version\n");
+        printf("Usage: chatty --version\n");
 }
 
 void    colour_set_command(const char *arg1, const char *arg2) { 
@@ -108,7 +108,7 @@ void    colour_set_command(const char *arg1, const char *arg2) {
         pthread_mutex_unlock(&colour_mutex);
     }
     else
-        printf("Usage: chat42 --colour-set COLOUR::COLOUR\n");
+        printf("Usage: chatty --colour-set COLOUR::COLOUR\n");
 
 }
 
@@ -123,5 +123,5 @@ void    colour_list_command(const char *arg1, const char *arg2) {
     if (arg1 == NULL && arg2 == NULL)
         printf("%s\n", LIST_COLOURS);
     else
-        printf("Usage: chat42 --colour-list\n");
+        printf("Usage: chatty --colour-list\n");
 }

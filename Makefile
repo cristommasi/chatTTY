@@ -1,4 +1,4 @@
-NAME = chat42
+NAME = chatty
 
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -MMD -MP
@@ -33,10 +33,10 @@ TEST_IP = $(shell ip -4 addr show wlp13s0 | grep -oP '(?<=brd\s)\d+(\.\d+){3}')
 
 
 
-all: CFLAGS += -DSEND_IP=\"$(SEND_IP)\"
+all: CFLAGS += -DSEND_IP=\"$('SEND_IP')\"
 all: $(NAME)
 	@echo "Using IP: $(SEND_IP)"
-	@echo "$(WHITE)Execute with ./chat42 --connect$(RESET)"
+	@echo "$(WHITE)Execute with ./chatty --connect$(RESET)"
 
 local: CFLAGS += -DSEND_IP=\"$(TEST_IP)\"
 local: $(NAME)
