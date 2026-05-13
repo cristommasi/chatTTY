@@ -1,4 +1,4 @@
-#include "../inc/chat42.h"
+#include "../inc/chatty.h"
 
 int	init_manager(void) {
 

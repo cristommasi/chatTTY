@@ -22,7 +22,7 @@ int tcp_struct_init(void *manager) {
     memset(&tcp->receive_addr, 0, sizeof(tcp->receive_addr));
     tcp->receive_addr.sin_family = AF_INET;
     tcp->receive_addr.sin_addr.s_addr = INADDR_ANY;
-    tcp->receive_addr.sin_port = htons(man->TCPPORT);
+    tcp->receive_addr.sin_port = htons(TCP_PORT);
 
 
     if (bind(tcp->sockfd, (struct sockaddr*)&tcp->receive_addr, sizeof(tcp->receive_addr)) < 0) {
