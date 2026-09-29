@@ -1,11 +1,6 @@
-#include "../inc/chatty.h"
+#include "../../inc/chatty.h"
 
-void    ht_init(t_client **users_table) {
 
-    for (int i = 0; i < TABLE_MAX_SIZE; i++) {
-        users_table[i] = NULL;
-    }
-}
 
 void    ht_clear(t_client **users_table)
 {
@@ -64,13 +59,11 @@ int ht_insert(t_client **users_table, t_client *new_user) {
     new_user->next = NULL;
     if (cur == NULL) {
         users_table[index] = new_user;
-        add_user_autocomplete(new_user->USERNAME);
         return (0);
     }
     while (cur->next)
         cur = cur->next;
     cur->next = new_user;
-    add_user_autocomplete(new_user->USERNAME);
     return (0);
 }
 
@@ -116,7 +109,7 @@ t_client*    ht_delete(t_client **users_table,  char *username, char *machine_id
     return (NULL);
 }
 
-t_client *ht_add(struct sockaddr_in *new_cliaddr, char *username, char *machine_id)
+t_client *ht_add(struct sockaddr_in *new_cliaddr, char *tcp_port, char *username, char *machine_id)
 {
     if (!new_cliaddr || !username || !machine_id)
         return (NULL);
@@ -126,7 +119,7 @@ t_client *ht_add(struct sockaddr_in *new_cliaddr, char *username, char *machine_
     new_user->next = NULL;
     new_user->CLIENT_ADDR.sin_family = AF_INET;
     new_user->CLIENT_ADDR.sin_addr.s_addr = new_cliaddr->sin_addr.s_addr;
-    new_user->CLIENT_ADDR.sin_port = htons(TCP_PORT);
+    new_user->CLIENT_ADDR.sin_port = htons(atoi(tcp_port));
 
     strncpy(new_user->USERNAME, username, 63);
     new_user->USERNAME[63] = '\0';

@@ -19,7 +19,7 @@
 # endif
 #define BUF_SIZE 1024
 #define TABLE_MAX_SIZE 6
-#define UDP_REGEX "%d;%63[^;];%63[^;];%63[^;];%63[^;];"
+#define UDP_REGEX "%d;%63[^;];%63[^;];%63[^;];"
 #define CONFIG_PATH ".usr_info.txt"
 //-------------------------------------------------------------------------------------------------------NETWORKING VARS
 
@@ -38,10 +38,10 @@ extern t_client **users_table;
 extern pthread_mutex_t  hash_table_mutex;
 extern pthread_mutex_t  colour_mutex;
 extern pthread_mutex_t	msg_mutex;
-extern pthread_mutex_t	autocomplete_mutex;
+
 
 void            ht_clear(t_client **users_table);
-t_client        *ht_add(struct sockaddr_in *new_cliaddr, char *username, char *machine_id);
+t_client        *ht_add(struct sockaddr_in *new_cliaddr, char *tcp_port, char *username, char *machine_id);
 t_client        *ht_delete(t_client **users_table,  char *username, char *machine_id);
 t_client        *ht_search(t_client **users_table, char *username);
 int             ht_insert(t_client **users_table, t_client *new_user);
@@ -56,11 +56,11 @@ void            ht_init(t_client **users_table);
 //-------------------------------------------------------------------------------------------------------TCP THREAD
 typedef struct s_tcp {
 
-  char                *OWN_USER_ID;
-  size_t              OWN_USER_ID_LEN;
+  char                *user_string;
+  size_t              user_string_len;
   int                 sockfd;
-  struct sockaddr_in  receive_addr;
-  struct sockaddr_in  send_addr;
+  struct sockaddr_in  *receive_addr;
+  struct sockaddr_in  *send_addr;
   int                 opt;
   t_client            **users_table;
   pthread_t           send_thread;
@@ -68,9 +68,11 @@ typedef struct s_tcp {
 
 } t_tcp;
 
-int              tcp_struct_init(void *manager);
-void            *tcp_thread_func(void* tcp_struct);
-void            send_tcp_message(t_client *client, const char *msg, t_tcp *tcp);
+int     tcp_struct_init();
+int     tcp_socket_init(t_tcp *tcp);
+int     tcp_receive_addr_init(t_tcp *tcp);
+void*   tcp_receive(void* arg);
+void    send_tcp_message(t_client *client, const char *msg, t_tcp *tcp);
 //-------------------------------------------------------------------------------------------------------TCP THREAD
 
 
@@ -79,43 +81,30 @@ void            send_tcp_message(t_client *client, const char *msg, t_tcp *tcp);
 //-------------------------------------------------------------------------------------------------------UDP THREAD
 typedef struct s_udp {
 
-  char                *OWN_USER_ID;
-  size_t              OWN_USER_ID_LEN;
+  char                *user_string;
+  size_t              user_string_len;
   int                 sockfd;
   int                 opt;
-  struct sockaddr_in  receive_addr;
-  struct sockaddr_in  send_addr;
+  struct sockaddr_in  *receive_addr;
+  struct sockaddr_in  *send_addr;
   t_client            **users_table;
   pthread_t           send_thread;
   pthread_t           receive_thread;
 
 } t_udp;
 
-int             udp_struct_init(void *manager);
-void            *udp_send(void* arg);
-void            *udp_receive(void* arg);
-void            udp_handle_user(int status, t_udp *udp, struct sockaddr_in *new_cliaddr, char *username, char *machine_id, char *color_a, char *color_b);
-void            udp_send_disconnect_msg(t_udp *udp);
+
+int     udp_send_addr_init(t_udp *udp);
+int     udp_receive_addr_init(t_udp *udp);
+int     udp_socket_init(t_udp *udp);
+int     udp_struct_init(); 
+void    udp_handle_user(int status, t_udp *udp, struct sockaddr_in *new_cliaddr,  char *username, char *machine_id, char *tcp_port);
+void    *udp_receive(void* arg);
+void    *udp_broadcast(void* arg);
+void    send_udp_message(t_udp *udp, char *msg);
+void    udp_send_disconnect_msg(t_udp *udp);
 //-------------------------------------------------------------------------------------------------------UDP THREAD
 
-
-
-
-//-------------------------------------------------------------------------------------------------------AUTOCOMPLETE
-typedef struct s_client_names {
-
-    char *name;
-    struct s_client_names *next;
-
-}             t_client_names;
-
-char    **init_autocomplete(const char *text, int start, int end);
-void	  free_autocomplete(t_client_names **head);
-char    *find_autocomplete(const char *text, int state);
-void	  remove_user_autocomplete(const char *username);
-void    add_user_autocomplete(const char *username);
-
-//-------------------------------------------------------------------------------------------------------AUTOCOMPLETE
 
 
 
@@ -123,23 +112,28 @@ void    add_user_autocomplete(const char *username);
 //-------------------------------------------------------------------------------------------------------MANAGER STRUCT 
 typedef struct s_manager
 {
-    t_udp           *udp;
-    t_tcp           *tcp;
-    t_client        **users_table;
-    char            *OWN_USERNAME;
-    char            *OWN_MACHINE_ID;
+    t_udp           *UDP;
+    t_tcp           *TCP;
+    int              PORT_TCP;
+    t_client        **USERS_TABLE;
+    char            *USERNAME;
+    char            *MACHINE_ID;
+    char            *USER_STRING;
     char            *colour_a;
     char            *colour_b;
-    t_client_names  *client_table_names;
+    int             EXIT_LVL_man;
+    int             EXIT_LVL_udp;
+    int             EXIT_LVL_tcp;
+    int             EXIT_LVL_MAIN;
 }             t_manager;
 
 extern t_manager *manager;
+
+int	            init_manager(char *tcp_port);
 void            exit_manager();
-int             init_manager(void);
-void            signal_handler(int signo);
-void            exit_and_free_udp();
-void            exit_and_free_tcp();
-void            exit_and_free_manager();
+void            free_tcp(int level);
+void            free_udp(int level);
+void            free_manager(int level);
 void            get_usr_file_colours();
 void            set_default_colours();
 //-------------------------------------------------------------------------------------------------------MANAGER STRUCT 
@@ -147,13 +141,15 @@ void            set_default_colours();
 
 
 //-------------------------------------------------------------------------------------------------------UTILS
-char            *build_user_info(const char *machine_id, const char *user_id, const char *colour_a, const char *colour_b);
-char            *build_colour_string(const char *machine_id, const char *username, const char *colour_a, const char *colour_b);
-char            *get_user_name(void);
-char            *get_machine_id(void);
-char            *get_colour(const char *name);
-const char       *get_color_name(const char *code);
-char            *strjoin(const char *s1, const char *s2);
+char      	*build_user_string();
+char        *get_machine_id(void);
+char      	*get_user_name(void);
+void      	set_default_colours();
+void      	get_usr_file_colours();
+char      	*build_coloured_name(const char *username, const char *colour_b);
+char      	*strjoin(const char *s1, const char *s2);
+char        *get_colour(const char *name);
+const char  *get_color_name(const char *code);
 //-------------------------------------------------------------------------------------------------------UTILS
 
 

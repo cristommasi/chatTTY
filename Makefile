@@ -1,7 +1,7 @@
 NAME = chatty
 
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -MMD -MP
+CFLAGS = -Wall -Wextra -MMD -MP
 LDFLAGS = -lpthread -lreadline -lncurses
 
 RM = rm -rf
@@ -13,14 +13,19 @@ ORANGE  = \033[1;38;5;208m
 RESET = \033[0m
 
 
-SRCS = src/main.c \
-	src/tcp_thread.c \
-	src/udp_thread.c \
-	src/utils.c \
-	src/hash_table.c \
-	src/manager.c \
-	src/commands.c \
-	src/autocomplete.c
+SRCS = \
+	src/main.c \
+	src/manager/init.c \
+	src/manager/utils.c \
+	src/manager/commands.c \
+	src/manager/exit.c \
+	src/table/hash_table.c \
+	src/tcp/init.c \
+	src/tcp/send.c \
+	src/tcp/receive.c \
+	src/udp/init.c \
+	src/udp/send.c \
+	src/udp/receive.c \
 
 OBJDIR = objs
 OBJS = $(addprefix $(OBJDIR)/,$(SRCS:.c=.o))
@@ -29,7 +34,7 @@ DEPS = $(OBJS:.o=.d)
 
 
 SEND_IP = $(shell ip -4 addr show enp4s0f0 | grep -oP '(?<=brd\s)\d+(\.\d+){3}')
-TEST_IP = $(shell ip -4 addr show wlp13s0 | grep -oP '(?<=brd\s)\d+(\.\d+){3}')
+LOCAL_IP = $(shell ip -4 -o addr show | awk '{print $$4}' | cut -d/ -f1 | grep '^192\.168\.' | head -n 1)
 
 
 
@@ -38,9 +43,9 @@ all: $(NAME)
 	@echo "Using IP: $(SEND_IP)"
 	@echo "$(WHITE)Execute with ./chatty --connect$(RESET)"
 
-local: CFLAGS += -DSEND_IP=\"$(TEST_IP)\"
+local: CFLAGS += -D SEND_IP=\"$(LOCAL_IP)\"
 local: $(NAME)
-	@echo "Using IP: $(TEST_IP)"
+	@echo "Using Local IP: $(LOCAL_IP)"
 
 $(OBJDIR)/%.o: %.c
 	@mkdir -p $(dir $@)

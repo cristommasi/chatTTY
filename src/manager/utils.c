@@ -1,5 +1,21 @@
-#include "../inc/chatty.h"
+#include "../../inc/chatty.h"
 
+
+char	*build_user_string()
+{
+	char	*result;
+	size_t	len;
+
+	len = snprintf(NULL, 0,"1;%s;%s;%d;", manager->USERNAME, manager->MACHINE_ID, manager->PORT_TCP) + 1;
+
+	if ((result = malloc(len)) == NULL) {
+		return (NULL);
+	}
+
+	snprintf(result, len, "1;%s;%s;%d;", manager->USERNAME, manager->MACHINE_ID, manager->PORT_TCP);
+
+	return (result);
+}
 
 char *get_machine_id(void)
 {
@@ -8,13 +24,14 @@ char *get_machine_id(void)
 	char *session = getenv("SESSION_MANAGER");
 	char *result;
 
+	return (strdup(session));
 	session_id[0] = '\0';
 
 	if (session) {
 		char *p = strchr(session, '/');
 		if (p) {
 			p++;
-			char *end = strchr(p, '.');
+			char *end = strchr(p, ':');
 			if (!end)
 				end = strchr(p, ':');
 			if (!end)
@@ -45,8 +62,7 @@ char *get_machine_id(void)
 	return (result);
 }
 
-
-char *get_user_name(void)
+char	*get_user_name(void)
 {
 	char *user;
 	char *result;
@@ -72,54 +88,64 @@ char *get_user_name(void)
 	return (result);
 }
 
+void	set_default_colours() {
 
-char *build_user_info(const char *machine_id, const char *user_id, const char *colour_a, const char *colour_b)
-{
-	char *result;
-	size_t len;
-	const char *colour_a_name = get_color_name(colour_a);
-	const char *colour_b_name = get_color_name(colour_b);
-
-	if (!machine_id || !user_id)
-		return (NULL);
-
-	len = 2 + strlen(machine_id) + 1 + strlen(user_id) + 1 +
-		strlen(colour_a_name) + 1 + strlen(colour_b_name) + 2;
-
-	result = malloc(len);
-	if (!result)
-		return (NULL);
-
-	snprintf(result, len, "1;%s;%s;%s;%s;", machine_id, user_id, colour_a_name, colour_b_name);
-	return (result);
+	FILE *fp = fopen(CONFIG_PATH, "w");
+	if (!fp)
+		return ;
+	fprintf(fp, "COLOURS=<BOLD_WHITE>\n");
+	fclose(fp);
+	manager->colour_a = BOLD_WHITE;
 }
 
+void	get_usr_file_colours() {
 
-char *build_colour_string(const char *machine_id, const char *username, const char *colour_a, const char *colour_b)
+	FILE *fp = fopen(CONFIG_PATH, "r");
+	if (!fp) {
+		set_default_colours();
+		return ;
+	}
+	char line[BUF_SIZE];
+	char colours[2][64];
+	char *p;
+	if (!fgets(line, sizeof(line), fp)) {
+		fclose(fp);
+		set_default_colours();
+	}
+	fclose(fp);
+	if (strncmp(line, "COLOURS=", 8) != 0) {
+		set_default_colours();
+		return;
+	}
+	p = line + 8;
+	if (sscanf(p, "%63[^:]::%63s", colours[0], colours[1]) != 2) {
+		set_default_colours();
+		return;
+	}
+	manager->colour_a = get_colour(colours[0]);
+	manager->colour_b = get_colour(colours[1]);
+	return ;
+}
+
+char	*build_coloured_name(const char *username, const char *colour_b)
 {
 	char *result;
 	size_t len;
 
 	
-	if (!machine_id || !username)
+	if (!username)
 		return (NULL);
 
-
-	len = strlen(colour_a) + strlen(machine_id) + strlen(RESET) +
-	      2 + 
-	      strlen(colour_b) + strlen(username) + strlen(RESET) +
-	      1 + 
-	      2; 
-
+	len =  strlen(colour_b) + 1 + strlen(username) + 1 + 5 + strlen(RESET) + 2; 
 	result = malloc(len);
 	if (!result)
 		return (NULL);
 
-	snprintf(result, len, "%s%s%s::%s%s%s: ", colour_a, machine_id, RESET, colour_b, username, RESET);
+	snprintf(result, len, "%s<%s><You>%s ",  colour_b, username, RESET);
 	return (result);
 }
 
-char *strjoin(const char *s1, const char *s2)
+char	*strjoin(const char *s1, const char *s2)
 {
 	size_t len1, len2;
 	char *res;
@@ -140,7 +166,7 @@ char *strjoin(const char *s1, const char *s2)
 	return (res);
 }
 
-char  *get_colour(const char *name) {
+char  	*get_colour(const char *name) {
 	if (!name) return WHITE;
 	if (strncmp(name, "BLACK", 6) == 0) return BLACK;
 	if (strncmp(name, "RED", 4) == 0) return RED;

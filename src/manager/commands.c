@@ -1,4 +1,4 @@
-#include "../inc/chatty.h"
+#include "../../inc/chatty.h"
 
 
 command_func_t    is_server_command(char *cmd) {
@@ -48,14 +48,20 @@ void    handle_commands(const char *input, t_tcp *tcp) {
 	if (*input == '\0') { 
 
 		return ((void)printf("usage: chatty <username> \"message\"\n"), (void)fflush(stdout)); 
-	} 
+	}
+
 
 	strncpy(msg, input, BUF_SIZE - 1); 
 	msg[BUF_SIZE - 1] = '\0'; 
 
+    if (strcmp(cmd_or_user, "--all") == 0) {
+
+        send_udp_message(manager->UDP, msg);
+        return ;
+    }
 
 	pthread_mutex_lock(&hash_table_mutex); 
-	t_client *client = ht_search(users_table, cmd_or_user); 
+	t_client *client = ht_search(manager->USERS_TABLE, cmd_or_user); 
 	if (!client) { 
 		printf("User '%s' not found\n", cmd_or_user); fflush(stdout);
 		return ((void)pthread_mutex_unlock(&hash_table_mutex)); 
@@ -66,6 +72,7 @@ void    handle_commands(const char *input, t_tcp *tcp) {
     pthread_mutex_unlock(&colour_mutex);
 	pthread_mutex_unlock(&hash_table_mutex);
 }
+
 
 void    help_command(const char *arg1, const char *arg2) { 
     if (arg1 == NULL && arg2 == NULL)
@@ -102,9 +109,9 @@ void    colour_set_command(const char *arg1, const char *arg2) {
 	    }
         fprintf(fp, "COLOURS=%s::%s\n", arg1, arg2);
         fclose(fp);
-        manager->udp->OWN_USER_ID = build_user_info(manager->OWN_MACHINE_ID, manager->OWN_USERNAME, get_colour(arg1), get_colour(arg2));
-        manager->tcp->OWN_USER_ID = build_colour_string(manager->OWN_MACHINE_ID, manager->OWN_USERNAME, get_colour(arg1), get_colour(arg2));
-        printf("%s(colour set)\n", manager->tcp->OWN_USER_ID);
+        manager->UDP->user_string = build_user_string(manager);
+        manager->TCP->user_string = build_coloured_name(manager->USERNAME, get_colour(arg1));
+        printf("%s(colour set)\n", manager->TCP->user_string);
         pthread_mutex_unlock(&colour_mutex);
     }
     else
