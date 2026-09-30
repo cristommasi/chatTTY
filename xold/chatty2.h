@@ -19,7 +19,7 @@
 # endif
 #define BUF_SIZE 1024
 #define TABLE_MAX_SIZE 6
-#define UDP_REGEX "%d;%63[^;];%63[^;];%63[^;];"
+#define UDP_REGEX "%1;%63[^;];%63[^;];%63[^;];"
 #define CONFIG_PATH ".usr_info.txt"
 //-------------------------------------------------------------------------------------------------------NETWORKING VARS
 

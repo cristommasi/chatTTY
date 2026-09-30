@@ -50,23 +50,6 @@ ssize_t ht_hash(char *username) {
 }
 
 
-int ht_insert(t_client **users_table, t_client *new_user) {
-
-    if (!new_user || !new_user->USERNAME[0])
-        return (1);
-    int index = ht_hash(new_user->USERNAME);
-    t_client *cur = users_table[index];
-    new_user->next = NULL;
-    if (cur == NULL) {
-        users_table[index] = new_user;
-        return (0);
-    }
-    while (cur->next)
-        cur = cur->next;
-    cur->next = new_user;
-    return (0);
-}
-
 t_client    *ht_search(t_client **users_table, char *username)
 {
 	int     index;
@@ -107,6 +90,23 @@ t_client*    ht_delete(t_client **users_table,  char *username, char *machine_id
         cur = cur->next;
     }
     return (NULL);
+}
+
+int ht_insert(t_client **users_table, t_client *new_user) {
+
+    if (!new_user || !new_user->USERNAME[0])
+        return (1);
+    int index = ht_hash(new_user->USERNAME);
+    t_client *cur = users_table[index];
+    new_user->next = NULL;
+    if (cur == NULL) {
+        users_table[index] = new_user;
+        return (0);
+    }
+    while (cur->next)
+        cur = cur->next;
+    cur->next = new_user;
+    return (0);
 }
 
 t_client *ht_add(struct sockaddr_in *new_cliaddr, char *tcp_port, char *username, char *machine_id)
